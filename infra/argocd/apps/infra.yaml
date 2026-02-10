@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mandradeidp-infra
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: apps
+  source:
+    repoURL: https://github.com/darede-labs/idp-mandradeidp.git
+    targetRevision: main
+    path: infra
+    directory:
+      include: '{namespace.yaml,resource-quota.yaml,aurora-master-password-secret.yaml,aurora-claim.yaml,httpapi-claim.yaml,staticwebsite-claim.yaml,db-externalsecret.yaml}'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mandradeidp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

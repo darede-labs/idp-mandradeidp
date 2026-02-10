@@ -1,0 +1,14 @@
+{
+  "name": "mandradeidp-backend",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.13.3",
+    "mysql2": "^3.11.5"
+  }
+}

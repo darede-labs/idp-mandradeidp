@@ -1,0 +1,88 @@
+name: frontend-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: platform-eks
+  APP_NAME: mandradeidp
+  DOMAIN: timedevops.click
+  BUCKET_NAME: idp-mandradeidp-static
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::948881762705:role/github-actions-ecr-push
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.31.0'
+
+      - name: Configure kubectl for EKS
+        run: |
+          aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Resolve CloudFront distribution ID from StaticWebsite claim
+        id: resolve-dist
+        run: |
+          # Try claim status first (fast path), then fallback by CloudFront alias.
+          DIST_ID=$(kubectl --request-timeout=5s get staticwebsite ${{ env.APP_NAME }}-web -n ${{ env.APP_NAME }} -o jsonpath='{.status.distributionId}' 2>/dev/null || echo "")
+          
+          if [ -z "$DIST_ID" ] || [ "$DIST_ID" = "None" ]; then
+            echo "Could not resolve CloudFront distribution ID from StaticWebsite claim"
+            echo "Attempting fallback: query CloudFront by alias"
+            
+            DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Aliases.Items, '${{ env.APP_NAME }}.timedevops.click')].Id | [0]" --output text 2>/dev/null || echo "")
+          fi
+          
+          if [ -z "$DIST_ID" ] || [ "$DIST_ID" = "None" ]; then
+            echo "CloudFront distribution not found yet; proceeding with S3 deploy without invalidation."
+            DIST_ID=""
+          else
+            echo "Resolved CloudFront distribution ID: $DIST_ID"
+          fi
+
+          echo "dist-id=$DIST_ID" >> $GITHUB_OUTPUT
+
+      - name: Deploy static files to S3
+        run: |
+          aws s3 sync frontend/ "s3://${{ env.BUCKET_NAME }}/" --delete
+
+      - name: Invalidate CloudFront cache
+        if: true
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ steps.resolve-dist.outputs.dist-id }}" \
+            --paths "/*"
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Frontend deployed successfully"
+          echo "📦 Bucket: ${{ env.BUCKET_NAME }}"
+          if [ -n "${{ steps.resolve-dist.outputs.dist-id }}" ]; then
+            echo "🌐 Distribution: ${{ steps.resolve-dist.outputs.dist-id }}"
+            echo "♻️  CloudFront invalidation: executed"
+          else
+            echo "🌐 Distribution: pending provisioning"
+            echo "♻️  CloudFront invalidation: skipped"
+          fi
+          echo "🔗 URL: https://mandradeidp.timedevops.click"

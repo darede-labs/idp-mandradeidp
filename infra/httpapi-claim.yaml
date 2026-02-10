@@ -1,0 +1,37 @@
+apiVersion: platform.darede.io/v1alpha1
+kind: HttpApi
+metadata:
+  name: mandradeidp-api
+  namespace: mandradeidp
+spec:
+  appName: mandradeidp
+  
+  # Custom domain for API Gateway (must match ACM certificate)
+  customDomain: api-mandradeidp.timedevops.click
+  
+  # Cognito JWT authorizer configuration
+  cognitoIssuerUrl: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_75myDdDAc"  # https://cognito-idp.<region>.amazonaws.com/<pool-id>
+  cognitoAudience: "oseg1vj7ai3usqafrjtpor4e7"  # Cognito app client ID
+  
+  # API Gateway stage name (use $default for HTTP APIs)
+  stageName: "$default"
+  
+  # VPC Link Configuration (auto-populated from platform-params ConfigMap)
+  # Private subnet IDs for VPC Link ENIs (must be in different AZs)
+  vpcLinkSubnetIds:
+    - "{{ subnetId }}"
+    - "{{ subnetId }}"
+    - "{{ subnetId }}"
+  
+  # Security group for VPC Link ENIs (using EKS node security group)
+  # This allows VPC Link to communicate with backend pods in the cluster
+  vpcLinkSecurityGroupIds:
+    - "sg-0af4edc484e912aa3"
+  
+  # Backend integration URI (ALB listener ARN for VPC Link)
+  # API Gateway VPC Link integrates with ALB listener, not directly with K8s service
+  # ALB routes to backend pods via Ingress rules
+  integrationUri: "arn:aws:elasticloadbalancing:us-east-1:948881762705:listener/app/k8s-dev-platform-*/*/1770fb3c916e921d"
+  
+  # ACM certificate ARN for custom domain TLS (must be in us-east-1 for API Gateway)
+  certificateArn: "arn:aws:acm:us-east-1:948881762705:certificate/051f6515-0d0b-459c-a056-0663f7c88f5e"

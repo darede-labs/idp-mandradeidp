@@ -1,0 +1,32 @@
+apiVersion: platform.darede.io/v1alpha1
+kind: Aurora
+metadata:
+  name: mandradeidp-db
+  namespace: mandradeidp
+  labels:
+    db.engine: postgresql
+spec:
+  appName: mandradeidp
+  dbSize: S  # S | M | L
+  dbEngine: postgresql  # aurora-postgresql | aurora-mysql | postgresql | mysql
+  engineVersion: "17.7"
+  
+  # VPC Configuration (auto-populated from platform-params ConfigMap)
+  vpcId: "vpc-0a66641a80c762baa"
+  
+  # Private subnet IDs for Aurora subnet group (must be in different AZs)
+  # Auto-populated from EKS cluster VPC configuration
+  subnetIds:
+    - "{{ subnetId }}"
+    - "{{ subnetId }}"
+    - "{{ subnetId }}"
+  
+  # Security group that will be allowed to connect to Aurora on port 5432
+  # Using EKS node security group for direct pod-to-DB connectivity
+  allowedSecurityGroupId: "sg-0af4edc484e912aa3"
+  
+  # Master password secret reference (must exist before creating Aurora)
+  masterPasswordSecretRef:
+    name: mandradeidp-aurora-master-password
+    namespace: mandradeidp
+    key: password
