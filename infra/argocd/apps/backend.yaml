@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mandradeidp-backend
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  project: apps
+  source:
+    repoURL: https://github.com/darede-labs/idp-mandradeidp.git
+    targetRevision: main
+    path: infra
+    directory:
+      include: '{deployment.yaml,service.yaml,ingress.yaml}'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mandradeidp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
