@@ -16,7 +16,7 @@ spec:
       # Wait for database to be ready before starting the application
       initContainers:
         - name: wait-for-db
-          image: postgres:15-alpine
+          image: 948881762705.dkr.ecr.us-east-1.amazonaws.com/idp-mandradeidp:sha-61379fc572714f6474bdbcc0b966bfda9f7c710a
           command:
             - sh
             - -c
@@ -48,7 +48,7 @@ spec:
       
       containers:
         - name: api
-          image: 948881762705.dkr.ecr.us-east-1.amazonaws.com/idp-mandradeidp:latest
+          image: 948881762705.dkr.ecr.us-east-1.amazonaws.com/idp-mandradeidp:sha-61379fc572714f6474bdbcc0b966bfda9f7c710a
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
