@@ -6,6 +6,9 @@ metadata:
   labels:
     db.engine: postgresql
 spec:
+  compositionSelector:
+    matchLabels:
+      db.engine: postgresql
   appName: mandradeidp
   dbSize: S  # S | M | L
   dbEngine: postgresql  # aurora-postgresql | aurora-mysql | postgresql | mysql
@@ -17,9 +20,9 @@ spec:
   # Private subnet IDs for Aurora subnet group (must be in different AZs)
   # Auto-populated from EKS cluster VPC configuration
   subnetIds:
-    - "{{ subnetId }}"
-    - "{{ subnetId }}"
-    - "{{ subnetId }}"
+    - "subnet-0e482760d4e4f0250"
+    - "subnet-001f264a2c946e35c"
+    - "subnet-05916f1c5cb54a6a8"
   
   # Security group that will be allowed to connect to Aurora on port 5432
   # Using EKS node security group for direct pod-to-DB connectivity
