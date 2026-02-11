@@ -10,9 +10,9 @@ spec:
     matchLabels:
       db.engine: postgresql
   appName: mandradeidp
-  dbSize: S  # S | M | L
-  dbEngine: postgresql  # aurora-postgresql | aurora-mysql | postgresql | mysql
-  engineVersion: "17.7"
+  dbSize: M  # M | L (S removed - Aurora minimum is t4g.medium)
+  dbEngine: aurora-postgresql  # aurora-postgresql | aurora-mysql | postgresql | mysql
+  engineVersion: "16.11"  # PostgreSQL 16.11 (recommended)
   
   # VPC Configuration (auto-populated from platform-params ConfigMap)
   vpcId: "vpc-0a66641a80c762baa"
