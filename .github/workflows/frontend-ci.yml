@@ -68,7 +68,7 @@ jobs:
           aws s3 sync frontend/ "s3://${{ env.BUCKET_NAME }}/" --delete
 
       - name: Invalidate CloudFront cache
-        if: true
+        if: ${{ steps.resolve-dist.outputs.dist-id != '' }}
         run: |
           aws cloudfront create-invalidation \
             --distribution-id "${{ steps.resolve-dist.outputs.dist-id }}" \
